@@ -1,5 +1,7 @@
+
+
 const video = document.getElementById('video');
-const emojiContainer = document.getElementById('emojiContainer'); // Элемент, куда будет выводиться эмодзи
+const emojiContainer = document.getElementById('emojiContainer'); 
 
 const emojiMap = {
   neutral: '😐',
@@ -12,10 +14,11 @@ const emojiMap = {
 };
 
 Promise.all([
-  faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-  faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
-  faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-  faceapi.nets.faceExpressionNet.loadFromUri('/models')
+  faceapi.nets.tinyFaceDetector.loadFromUri('./models'),
+  faceapi.nets.faceLandmark68Net.loadFromUri('./models'),
+  faceapi.nets.faceRecognitionNet.loadFromUri('./models'),
+  faceapi.nets.faceExpressionNet.loadFromUri('./models'),
+  faceapi.nets.ssdMobilenetv1.loadFromUri('./models')
 ]).then(startVideo);
 
 function startVideo() {
@@ -30,6 +33,22 @@ function startVideo() {
   }
 }
 
+async function getCurrentEmotion(video) {
+  let expressions = (await faceapi.detectSingleFace(video).withFaceExpressions()).expressions;
+  let resultExpression = 'neutral'
+
+ 
+  for (let key in expressions) {
+    let value = expressions[key]
+
+    if (value > expressions[resultExpression]) {
+      resultExpression = key
+    }
+  }
+  return resultExpression;
+}
+
+
 video.addEventListener('play', () => {
   const canvas = faceapi.createCanvasFromMedia(video);
   document.body.append(canvas);
@@ -37,31 +56,11 @@ video.addEventListener('play', () => {
   faceapi.matchDimensions(canvas, displaySize);
 
   setInterval(async () => {
-    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
-    const resizedDetections = faceapi.resizeResults(detections, displaySize);
-    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-    faceapi.draw.drawDetections(canvas, resizedDetections);
-    faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-    faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
-
-    // Выводим эмодзи, если обнаружено не нейтральное выражение
-    emojiContainer.innerHTML = '';
-    resizedDetections.forEach((detection) => {
-      const expressions = detection.expressions;
-      const detectedEmotions = Object.keys(expressions).map((emotion) => {
-        return { emotion: emotion, value: expressions[emotion] };
-      });
-      detectedEmotions.forEach((emotion) => {
-        if (emotion.emotion !== 'neutral' && emotion.value > 0.5) {
-          const emoji = emojiMap[emotion.emotion];
-          if (emoji) {
-            emojiContainer.innerHTML += emoji;
-          }
-        }
-      });
-    });
+    let emotion = await getCurrentEmotion(video)
+    if (emotion !== 'neutral') {
+      emojiContainer.innerHTML = emojiMap[emotion];
+    } else {
+      emojiContainer.innerHTML = '';
+    }
   }, 100);
 });
-
-
-console.log("2q3213rtf2efg2efg23eg2erg2tg2g");
