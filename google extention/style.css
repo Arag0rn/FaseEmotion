@@ -1,0 +1,12 @@
+.clock_extension {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 30px;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
